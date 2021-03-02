@@ -27,7 +27,7 @@ define( 'WP_SETUP_CONFIG', true );
 error_reporting( 0 );
 
 if ( ! defined( 'ABSPATH' ) ) {
-	define( 'ABSPATH', dirname( __DIR__ ) . '/' );
+	define( 'ABSPATH', dirname( __DIR__ ) . DIRECTORY_SEPARATOR );
 }
 
 require ABSPATH . 'wp-settings.php';
@@ -392,7 +392,18 @@ switch ( $step ) {
 		}
 		unset( $line );
 
-		if ( ! is_writable( ABSPATH ) ) :
+		/*
+		 * If this file doesn't exist, then we are using the wp-config-sample.php
+		 * file one level up, which is for the develop repo.
+		 */
+		if ( file_exists( ABSPATH . 'wp-config-sample.php' ) ) {
+			$path_to_wp_config = ABSPATH . 'wp-config.php';
+		} else {
+			$path_to_wp_config = dirname( ABSPATH ) . '/wp-config.php';
+		}
+
+		/* Check if the sample file is writable and if we can create the config file */
+		if ( ! is_writable( ABSPATH . 'wp-config-sample.php' ) || ( $handle = fopen( $path_to_wp_config, 'w' )) === FALSE ) :
 			setup_config_display_header();
 			?>
 	<p>
@@ -427,17 +438,7 @@ if ( ! /iPad|iPod|iPhone/.test( navigator.userAgent ) ) {
 </script>
 			<?php
 	else :
-		/*
-		 * If this file doesn't exist, then we are using the wp-config-sample.php
-		 * file one level up, which is for the develop repo.
-		 */
-		if ( file_exists( ABSPATH . 'wp-config-sample.php' ) ) {
-			$path_to_wp_config = ABSPATH . 'wp-config.php';
-		} else {
-			$path_to_wp_config = dirname( ABSPATH ) . '/wp-config.php';
-		}
-
-		$handle = fopen( $path_to_wp_config, 'w' );
+		/* Write the config file */
 		foreach ( $config_file as $line ) {
 			fwrite( $handle, $line );
 		}
